@@ -13,7 +13,7 @@ from performance_analysis import compute_performance_for_panel
 # -------------------------------------------------------------------
 # Configuration (from environment variables)
 # -------------------------------------------------------------------
-INFURA_URL = os.getenv("INFURA_URL")              # e.g. https://sepolia.infura.io/v3/xxxx
+ALCHEMY_URL = os.getenv("ALCHEMY_URL")              # e.g. https://eth-sepolia.g.alchemy.com/xxxx
 CONTRACT_ADDRESS_ENV = os.getenv("CONTRACT_ADDRESS")
 ABI_PATH = os.getenv("ABI_PATH", "contract_abi.json")
 PANELS_DIR = os.getenv("PANELS_DIR", "panels")
@@ -23,8 +23,8 @@ PRIVATE_KEY = os.getenv("PRIVATE_KEY")            # Only needed if you sign TXs
 ORACLE_ADDRESS = os.getenv("ORACLE_ADDRESS")
 ADMIN_ADDRESS = os.getenv("ADMIN_ADDRESS")
 
-if not INFURA_URL:
-    raise RuntimeError("INFURA_URL is not set")
+if not ALCHEMY_URL:
+    raise RuntimeError("ALCHEMY_URL is not set")
 if not CONTRACT_ADDRESS_ENV:
     raise RuntimeError("CONTRACT_ADDRESS is not set")
 
@@ -33,7 +33,7 @@ CONTRACT_ADDRESS = Web3.to_checksum_address(CONTRACT_ADDRESS_ENV)
 # -------------------------------------------------------------------
 # Web3 setup
 # -------------------------------------------------------------------
-w3 = Web3(Web3.HTTPProvider(INFURA_URL))
+w3 = Web3(Web3.HTTPProvider(ALCHEMY_URL))
 if not w3.is_connected():
     raise RuntimeError("Web3 not connected to RPC")
 
