@@ -7,6 +7,9 @@ from flask_cors import CORS
 from web3 import Web3
 from eth_account import Account
 
+# ⭐ ADDED: performance endpoint import
+from performance_analysis import compute_performance_for_panel
+
 # -------------------------------------------------------------------
 # Configuration (from environment variables)
 # -------------------------------------------------------------------
@@ -53,8 +56,8 @@ app = Flask(__name__)
 CORS(app, resources={
     r"/api/*": {
         "origins": [
-            "https://www.blockchain-powered-dpp-af.com",
-            "https://www.blockchain-powered-dpp-af.it"
+            "https://www.blockchain-powered-dpp-af.com"
+
         ]
     }
 })
@@ -84,7 +87,7 @@ def filter_by_access(dpp: Dict[str, Any], access: str) -> Dict[str, Any]:
             if value.get("Access_Tier") in tiers:
                 filtered[key] = value
             elif key == "installation_metadata" and access == "public":
-                # ✅ Special case: always keep tower_name and location for Public
+                # Special case: always keep tower_name and location for Public
                 filtered[key] = {
                     "tower_name": value.get("tower_name"),
                     "location": value.get("location"),
@@ -148,12 +151,55 @@ def get_dpp(panel_id: str):
     filtered = filter_by_access(dpp, access)
     return jsonify({"panel_id": panel_id, "access": access, "data": filtered})
 
+
+# ⭐⭐⭐ ADDED: PERFORMANCE ANALYSIS ENDPOINT ⭐⭐⭐
+@app.get("/api/performance/<panel_id>")
+def get_performance(panel_id: str):
+    """
+    Returns SSI, TBI, Performance Score + system errors for this panel.
+    """
+    # Load panel JSON
+    try:
+        dpp = load_panel_json(panel_id)
+    except FileNotFoundError:
+        return jsonify({"error": "Panel JSON not found"}), 404
+
+    # Fetch blockchain events
+    try:
+        events = fetch_events_for_panel(panel_id)
+    except Exception as e:
+        installation = dpp.get("installation_metadata", {})
+        # Return minimal response but DO NOT crash backend
+        return jsonify({
+            "panel_id": panel_id,
+            "data": {
+                "panel_metadata": {
+                    "tower_name": installation.get("tower_name"),
+                    "floor_number": installation.get("floor_number"),
+                    "location": installation.get("location"),
+                    "panel_azimuth_deg": installation.get("panel_azimuth_deg"),
+                    "elevation_m": installation.get("elevation_m"),
+                    "exposure_zone": installation.get("exposure_zone"),
+                    "tilt_angle_deg": installation.get("tilt_angle_deg"),
+                },
+                "points": [],
+                "system_events": [],
+                "_warnings": [f"Performance not computed: {str(e)}"],
+            },
+        }), 200
+
+    perf = compute_performance_for_panel(dpp, events)
+    return jsonify({"panel_id": panel_id, "data": perf})
+
+
+# -------------------------------------------------------------------
 # Health check (optional, useful for Render)
+# -------------------------------------------------------------------
 @app.get("/health")
 def health():
     return {"status": "ok"}, 200
 
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
     app.run(host="0.0.0.0", port=port)
-
