@@ -13,7 +13,7 @@ from performance_analysis import compute_performance_for_panel
 # -------------------------------------------------------------------
 # Configuration (from environment variables)
 # -------------------------------------------------------------------
-ALCHEMY_URL = os.getenv("ALCHEMY_URL")              # e.g. https://eth-sepolia.g.alchemy.com/xxxx
+ALCHEMY_URL = os.getenv("ALCHEMY_URL")      # e.g. https://eth-sepolia.g.alchemy.com/v2/xxxx
 CONTRACT_ADDRESS_ENV = os.getenv("CONTRACT_ADDRESS")
 ABI_PATH = os.getenv("ABI_PATH", "contract_abi.json")
 PANELS_DIR = os.getenv("PANELS_DIR", "panels")
